@@ -1,18 +1,46 @@
-﻿using AprendendoEntityFrmaework.BankContext;
+﻿using AprendendoEntityFramework;
+using AprendendoEntityFramework.ConfigurationModels;
+using AprendendoEntityFramework.Repositorios;
+using AprendendoEntityFramework.Repositorios.Interfaces;
+using AprendendoEntityFramework.Services;
+using AprendendoEntityFramework.Services.Interfaces;
+using AprendendoEntityFrmaework.BankContext;
 using AprendendoEntityFrmaework.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace AprendendoEntityFrmaework
 {
     class Program
     {
+        private static AppSettingsModel _appSettings;
+        private static IServiceProvider _serviceProvider;
         static void Main(string[] args)
         {
+            RegisterConfiguration();
+            RegisterServices();
+            var service = _serviceProvider.GetService<IProductRepository>();
+            var products = service.GetProducts().ToList();
+
+            foreach (var item in products)
+            {
+                Console.WriteLine(item.ProductName);
+            }
+
+            var productService = _serviceProvider.GetService<IProductService>();
+            var lowerPrices = productService.GetProductsWithLowerPrice();
+
+            DisposeServices();
+
+
             //GetLastProduct();
             //Console.WriteLine(CalculateAveragePriceByCategorie("higiene"));
             //Console.WriteLine(MaxPriceByCategorie("higiene"));
@@ -31,13 +59,43 @@ namespace AprendendoEntityFrmaework
             //RegisterProduct(new Product { ProductName = "Sabonete Líquido", ProductPrice = 5.99M, CategoryID = 1 });
             //RegisterProduct(new Product { ProductName = "Creme Dental Colgate", ProductPrice = 12.89M , CategoryID = 1});
             //Console.WriteLine("======================================\n");
-            ListOfRegions();
-            ListOfProducts();
-            ListOfRegions();
+            //ListOfRegions();
+            //ListOfProducts();
+            //ListOfRegions();
             //ListOfRegionsCompiledQuery();
             //RemoveProduct();
             //RegiteringRegions();
             //RegisterClient(new Client { Name = "Juliano", Address = new List<Address>() { new Address { StreetName = "Rua Bartolomeu Fonseca", City = "São Paulo", Country = "Brasil", ZipCode = "01010-011" } } });
+        }
+
+        private static void RegisterServices()
+        {
+            var servicesCollection = new ServiceCollection()
+                            .AddDbContext<ProductsRegionDbContext>(options => options.UseSqlServer(_appSettings.ConnectionStrings.DefaultConnection))
+                            .AddScoped<IProductRepository, ProductRepository>()
+                            .AddScoped<IProductService, ProductService>()
+                            .AddScoped(service => new ClientContext());
+
+
+            _serviceProvider = servicesCollection.BuildServiceProvider();
+        }
+
+        private static void RegisterConfiguration()
+        {
+            _appSettings = new AppSettingsHandler()
+                                    .GetAppSettings();
+        }
+
+        private static void DisposeServices()
+        {
+            if (_serviceProvider == null)
+            {
+                return;
+            }
+            if (_serviceProvider is IDisposable)
+            {
+                ((IDisposable)_serviceProvider).Dispose();
+            }
         }
 
         private static void RegisterClient(Client client)

@@ -4,14 +4,16 @@ using AprendendoEntityFrmaework.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace AprendendoEntityFrmaework.Migrations
+namespace AprendendoEntityFramework.Migrations
 {
     [DbContext(typeof(ProductsRegionDbContext))]
-    partial class ProductsRegionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210311212720_UpdateContextProduct")]
+    partial class UpdateContextProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

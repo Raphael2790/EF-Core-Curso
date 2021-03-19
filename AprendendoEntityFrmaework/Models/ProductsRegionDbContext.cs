@@ -32,18 +32,20 @@ namespace AprendendoEntityFrmaework.Models
             }
 
             optionsBuilder
-                .LogTo(Console.WriteLine,(category,level) => level == LogLevel.Information);
+                .LogTo(Console.WriteLine,(eventId,level) => level == LogLevel.Information);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("Relational:Collation", "Latin1_General_CI_AS");
 
+            modelBuilder.Ignore<Category>();
+
             //Podemos mapear duas entidades para a mesma tabela utilizando o ToTable com nomes iguais
             //E é somente possível quando existe um relacionamento 1 para 1 e ambas devem possuir chave estrangeira apontando para a primaria da outra ambas com mesmo nome
             modelBuilder.Entity<Product>(entity =>
             {
-                entity.ToTable("Product");
+                entity.ToTable("Products");
 
                 //Toda consulta na entidade de produto receberá esse filtro automaticamente
                 //entity.HasQueryFilter(x => x.CategoryID != 0);
@@ -61,7 +63,7 @@ namespace AprendendoEntityFrmaework.Models
                 //O entity irá aplicar a concorrencia otimista porém ao invés de comparar um propriedade com token
                 //Criamos um campo especifico para tratar a concorrencia na tabela
                 //Nem todos provedores de banco de dados suportam essa abordagem
-                entity.Property(x => x.RowVersion).IsRowVersion();
+                //entity.Property(x => x.RowVersion).IsRowVersion();
 
                 entity.Property(e => e.ProductPrice).HasColumnType("decimal(18, 2)");
 
