@@ -1,4 +1,5 @@
-﻿using AprendendoEntityFrmaework.BankContext.Models;
+﻿using AprendendoEntityFramework.BankContext;
+using AprendendoEntityFrmaework.BankContext.Models;
 using AprendendoEntityFrmaework.BankContext.ModelsConfiguring;
 using AprendendoEntityFrmaework.Models;
 using Microsoft.EntityFrameworkCore;
@@ -44,11 +45,9 @@ namespace AprendendoEntityFrmaework.BankContext
         {
             //Ignora uma classe e não mapea a tabela
             //modelBuilder.Ignore<Bank>();
-           
-            modelBuilder.HasDefaultSchema("dbank");
-            modelBuilder.ApplyConfiguration(new BankConfiguration());
-            modelBuilder.ApplyConfiguration(new AccountConfiguration());
-            modelBuilder.ApplyConfiguration(new BankClientConfiguration());
+
+            //Criando uma extensão de modelbuilder para aplicar as configurações multiplas
+            modelBuilder.MultipleApplyConfiguration();
 
             //Configuração para pegar todas classes que herdam de EntityType
             //modelBuilder.ApplyConfigurationsFromAssembly(

@@ -10,6 +10,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -25,10 +26,14 @@ namespace AprendendoEntityFrmaework
         private static IServiceProvider _serviceProvider;
         static void Main(string[] args)
         {
-            RegisterConfiguration();
             RegisterServices();
-            var service = _serviceProvider.GetService<IProductRepository>();
-            var products = service.GetProducts().ToList();
+            RegisterConfiguration();
+            var productRepository = _serviceProvider.GetService<IProductRepository>();
+
+            //A partir de uma pasta raiz será provido os arquivos
+            var fileService = _serviceProvider.GetService<IFileProvider>();
+
+            var products = productRepository.GetProducts().ToList();
 
             foreach (var item in products)
             {
@@ -37,6 +42,10 @@ namespace AprendendoEntityFrmaework
 
             var productService = _serviceProvider.GetService<IProductService>();
             var lowerPrices = productService.GetProductsWithLowerPrice();
+            foreach (var item in lowerPrices)
+            {
+                Console.WriteLine(item.ProductName);
+            }
 
             DisposeServices();
 
@@ -73,6 +82,7 @@ namespace AprendendoEntityFrmaework
             var servicesCollection = new ServiceCollection()
                             .AddDbContext<ProductsRegionDbContext>(options => options.UseSqlServer(_appSettings.ConnectionStrings.DefaultConnection))
                             .AddScoped<IProductRepository, ProductRepository>()
+                            .AddSingleton<IFileProvider>(new PhysicalFileProvider(Directory.GetCurrentDirectory()))
                             .AddScoped<IProductService, ProductService>()
                             .AddScoped(service => new ClientContext());
 
@@ -82,7 +92,7 @@ namespace AprendendoEntityFrmaework
 
         private static void RegisterConfiguration()
         {
-            _appSettings = new AppSettingsHandler()
+            _appSettings = new AppSettingsHandler(_serviceProvider.GetService<IFileProvider>())
                                     .GetAppSettings();
         }
 
