@@ -1,5 +1,6 @@
 ﻿using AprendendoEntityFramework.Repositorios.Interfaces;
 using AprendendoEntityFrmaework.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,11 @@ namespace AprendendoEntityFramework.Repositorios
         public ICollection<Product> GetProducts()
         {
             return _context.Products.ToList();
+        }
+
+        public ICollection<Product> GetProductsByCategoryId(int categoryId)
+        {
+            return _context.Products.Include(x => x.Category).Where(x => x.CategoryID == categoryId).ToList();
         }
     }
 }

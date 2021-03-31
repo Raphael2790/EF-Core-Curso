@@ -24,20 +24,41 @@ namespace AprendendoEntityFrmaework
     {
         private static AppSettingsModel _appSettings;
         private static IServiceProvider _serviceProvider;
+        private static IProductRepository _productRepository;
+        private static ICategoryRepository _categoryRepository;
         static void Main(string[] args)
         {
             RegisterServices();
             RegisterConfiguration();
-            var productRepository = _serviceProvider.GetService<IProductRepository>();
+            _productRepository = _serviceProvider.GetService<IProductRepository>();
+            _categoryRepository = _serviceProvider.GetService<ICategoryRepository>();
 
             //A partir de uma pasta raiz será provido os arquivos
             var fileService = _serviceProvider.GetService<IFileProvider>();
 
-            var products = productRepository.GetProducts().ToList();
+            var products = _productRepository.GetProducts().ToList();
 
-            foreach (var item in products)
+            //Execução síncrona aplicando a transformação/processamento do resultado um a um ao invés de fazer um carregamento completo
+            var products2 = _productRepository.GetProducts().Select(UpdateProductName).Select(AddProductDeliverFee);
+
+            var categories = _categoryRepository.GetCategories().SelectMany(GetProductsByCategories).Select(PrintProductName);
+
+            foreach (var cat in categories)
+            {
+
+            }
+
+            DateTime dataAtual = DateTime.Now;
+            Console.WriteLine("Data atual: " + dataAtual.ToLongDateString());
+            Console.WriteLine("Dia da semana: " + dataAtual.DayOfWeek);
+            Console.WriteLine("Dia da semana (int): " + (int)dataAtual.DayOfWeek);
+            Console.WriteLine("Segunda-feira desta semana: " + dataAtual.AddDays(-(int)dataAtual.DayOfWeek + 1));
+            Console.WriteLine("Sexta-feira desta semana: " + dataAtual.AddDays(-(int)dataAtual.DayOfWeek + 5));
+
+            foreach (var item in products2)
             {
                 Console.WriteLine(item.ProductName);
+                Console.WriteLine(item.ProductPrice.ToString("c"));
             }
 
             var productService = _serviceProvider.GetService<IProductService>();
@@ -77,11 +98,40 @@ namespace AprendendoEntityFrmaework
             //RegisterClient(new Client { Name = "Juliano", Address = new List<Address>() { new Address { StreetName = "Rua Bartolomeu Fonseca", City = "São Paulo", Country = "Brasil", ZipCode = "01010-011" } } });
         }
 
+        public static IEnumerable<Product> GetProductsByCategories(Category category)
+        {
+            Console.WriteLine(category.CategoryName);
+            var productsBycategory = _productRepository.GetProductsByCategoryId(category.CategoryID);
+            return productsBycategory;
+        }
+
+        public static string PrintProductName(Product product)
+        {
+            Console.WriteLine(product.ProductName);
+            return product.ProductName;
+        }
+
+        public static Product UpdateProductName(Product product)
+        {
+            product.ProductName = product.ProductName + "alterado";
+            Console.WriteLine(product.ProductName);
+            return product;
+        }
+
+        public static Product AddProductDeliverFee(Product product)
+        {
+            var deliverFee = 10.00M;
+            product.ProductPrice = product.ProductPrice + deliverFee;
+            Console.WriteLine(product.ProductPrice);
+            return product;
+        }
+
         private static void RegisterServices()
         {
             var servicesCollection = new ServiceCollection()
                             .AddDbContext<ProductsRegionDbContext>(options => options.UseSqlServer(_appSettings.ConnectionStrings.DefaultConnection))
                             .AddScoped<IProductRepository, ProductRepository>()
+                            .AddScoped<ICategoryRepository, CategoryRepository>()
                             .AddSingleton<IFileProvider>(new PhysicalFileProvider(Directory.GetCurrentDirectory()))
                             .AddScoped<IProductService, ProductService>()
                             .AddScoped(service => new ClientContext());
